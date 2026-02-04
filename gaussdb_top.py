@@ -445,13 +445,13 @@ def interactive_loop(config):
                 if value.isdigit():
                     config.interval = int(value)
             elif key == ord("1"):
-                config.section = 1
+                config.section = 0 if config.section == 1 else 1
             elif key == ord("2"):
-                config.section = 2
+                config.section = 0 if config.section == 2 else 2
             elif key == ord("3"):
-                config.section = 3
+                config.section = 0 if config.section == 3 else 3
             elif key == ord("4"):
-                config.section = 4
+                config.section = 0 if config.section == 4 else 4
             elif key == ord("t"):
                 show_message(["Tablespace information", "N/A (standby or not available)."])
             elif key == ord("x"):
