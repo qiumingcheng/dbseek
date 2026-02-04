@@ -1,24 +1,14 @@
-# dbseek oratop-like monitor
 
-This repository provides a lightweight, Oracle `oratop`-inspired monitor written in Python.
-It relies only on `/proc` so it runs without extra dependencies on Linux.
+# gstop
 
-## Usage
+This repository is now focused on **openGauss gstop**, a lightweight monitoring helper for openGauss
+instances, rather than Oracle oratop.
 
-```bash
-python3 oratop.py
-```
+## Scope
 
-Options:
+- Monitor openGauss database activity and performance snapshots.
+- Provide a simple, terminal-friendly overview for DBAs.
 
-- `--interval SECONDS` refresh interval (default: 1.0)
-- `--count N` number of iterations before exit
-- `--top N` number of processes to show
-- `--sort {cpu,mem}` sort by CPU or memory (default: cpu)
-- `--no-clear` disable ANSI clear between refreshes
+## Status
 
-Example:
-
-```bash
-python3 oratop.py --interval 2 --top 5 --sort mem
-```
+Initial scaffold for the openGauss gstop tool.
