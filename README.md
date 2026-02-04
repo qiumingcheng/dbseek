@@ -32,10 +32,14 @@ GAUSSDB_PASSWORD=secret ./gaussdb_top.py -h 127.0.0.1 -U dbadmin -d postgres
 
 - **Instance**: database name, host/port, version, and start time.
 - **Database Stats**: commit/rollback counts, block read/hit metrics, and tuple activity.
+- **Database Delta**: per-interval deltas for commits/rollbacks and tuple activity.
 - **Session Summary**: sessions grouped by state and wait type.
+- **Wait Events**: top wait event types and events.
 - **Top SQL (active)**: active SQL snippets with execution counts, max runtime, and wait type.
 - **Top Sessions**: longest-running sessions with wait classification and SQL snippet.
+- **Lock Summary**: top lock types and modes.
 - **Background Writer**: checkpoint and buffer statistics.
+- **Background Writer Delta**: per-interval buffer and checkpoint deltas.
 
 ## Status
 
