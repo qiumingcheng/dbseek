@@ -144,12 +144,13 @@ class Config:
         self.password = None
         self.section = 0
         self.previous_wait = {}
+        self.previous_cpu = None
 
 
 def parse_args(argv):
     config = Config()
     args = list(argv)
-    logon = None
+    logon_parts = []
     idx = 0
     while idx < len(args):
         arg = args[idx]
@@ -157,12 +158,18 @@ def parse_args(argv):
             config.batch = True
         elif arg == "-n":
             idx += 1
+            if idx >= len(args):
+                raise SystemExit("Missing value for -n")
             config.iterations = int(args[idx])
         elif arg == "-o":
             idx += 1
+            if idx >= len(args):
+                raise SystemExit("Missing value for -o")
             config.output = args[idx]
         elif arg == "-i":
             idx += 1
+            if idx >= len(args):
+                raise SystemExit("Missing value for -i")
             config.interval = int(args[idx])
         elif arg == "-r":
             config.realtime_wait = True
@@ -181,9 +188,9 @@ def parse_args(argv):
         elif arg.startswith("-"):
             raise SystemExit(f"Unknown option: {arg}")
         else:
-            logon = arg
+            logon_parts.append(arg)
         idx += 1
-    config.logon = logon
+    config.logon = " ".join(logon_parts) if logon_parts else None
     return config
 
 
@@ -226,7 +233,10 @@ def run_query(config, sql):
     if config.password:
         env["PGPASSWORD"] = config.password
     cmd = build_gsql_command(config, sql)
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env)
+    except FileNotFoundError as exc:
+        raise RuntimeError("gsql not found on PATH") from exc
     if result.returncode != 0:
         raise RuntimeError(result.stderr.strip() or "gsql failed")
     lines = [line for line in result.stdout.splitlines() if line.strip()]
@@ -248,7 +258,7 @@ def read_loadavg():
         return ["0", "0", "0"]
 
 
-def read_cpu_busy():
+def read_cpu_busy(config):
     try:
         with open("/proc/stat", "r", encoding="utf-8") as handle:
             line = handle.readline()
@@ -260,7 +270,16 @@ def read_cpu_busy():
     values = [int(v) for v in parts[1:8]]
     idle = values[3] + values[4]
     total = sum(values)
-    return 100.0 * (total - idle) / total if total else 0.0
+    if config.previous_cpu is None:
+        config.previous_cpu = (total, idle)
+        return 0.0
+    prev_total, prev_idle = config.previous_cpu
+    total_delta = total - prev_total
+    idle_delta = idle - prev_idle
+    config.previous_cpu = (total, idle)
+    if total_delta <= 0:
+        return 0.0
+    return 100.0 * (total_delta - idle_delta) / total_delta
 
 
 def format_number(value, width):
@@ -286,7 +305,7 @@ def build_sections(config):
 
     width = 132 if config.detailed else 80
     loadavg = read_loadavg()
-    cpu_busy = read_cpu_busy()
+    cpu_busy = read_cpu_busy(config)
 
     inst = instance_info[0] if instance_info else ["-", "-", "-", "-", "-"]
     db = db_stats[0] if db_stats else ["-", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
